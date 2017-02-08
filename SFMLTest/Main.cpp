@@ -71,68 +71,7 @@ private:
 
 	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
 	{
-		states.transform *= getTransform();
-		
-		sf::Vertex kw11[] = {
-			sf::Vertex(p1), sf::Vertex(p2)
-		};
-
-		sf::Vertex kw21[] = {
-			sf::Vertex(p2), sf::Vertex(p4)
-		};
-
-		sf::Vertex kw31[] = {
-			sf::Vertex(p4), sf::Vertex(p3)
-		};
-
-		sf::Vertex kw41[] = {
-			sf::Vertex(p3), sf::Vertex(p1)
-		};
-
-		sf::Vertex kw12[] = {
-			sf::Vertex(d1), sf::Vertex(d2)
-		};
-
-		sf::Vertex kw22[] = {
-			sf::Vertex(d2), sf::Vertex(d4)
-		};
-
-		sf::Vertex kw32[] = {
-			sf::Vertex(d4), sf::Vertex(d3)
-		};
-
-		sf::Vertex kw42[] = {
-			sf::Vertex(d3), sf::Vertex(d1)
-		};
-
-		sf::Vertex ln1[] = {
-			sf::Vertex(p1), sf::Vertex(d1)
-		};
-
-		sf::Vertex ln2[] = {
-			sf::Vertex(p2), sf::Vertex(d2)
-		};
-
-		sf::Vertex ln3[] = {
-			sf::Vertex(p3), sf::Vertex(d3)
-		};
-
-		sf::Vertex ln4[] = {
-			sf::Vertex(p4), sf::Vertex(d4)
-		};
-
-		target.draw(kw11, 2, sf::Lines, states);
-		target.draw(kw21, 2, sf::Lines, states);
-		target.draw(kw31, 2, sf::Lines, states);
-		target.draw(kw41, 2, sf::Lines, states);
-		target.draw(kw12, 2, sf::Lines, states);
-		target.draw(kw22, 2, sf::Lines, states);
-		target.draw(kw32, 2, sf::Lines, states);
-		target.draw(kw42, 2, sf::Lines, states);
-		target.draw(ln1, 2, sf::Lines, states);
-		target.draw(ln2, 2, sf::Lines, states);
-		target.draw(ln3, 2, sf::Lines, states);
-		target.draw(ln4, 2, sf::Lines, states);
+		states.transform *= getTransform();		
 
 		sf::VertexArray quad[4];
 
@@ -184,23 +123,56 @@ private:
 
 		if (currpos.y <= srodek_y && currpos.x <= srodek_x)
 		{
-			target.draw(quad[3], states);
-			target.draw(quad[1], states);			
+			if (currpos.y <= quad[3][0].position.y)
+			{
+				target.draw(quad[3], states);
+				target.draw(quad[1], states);
+			}
+			else
+			{
+				target.draw(quad[1], states);
+				target.draw(quad[3], states);
+			}
+
 		}
 		else if (currpos.y <= srodek_y && currpos.x > srodek_x)
 		{
-			target.draw(quad[2], states);
-			target.draw(quad[1], states);		
+			if (currpos.y <= quad[2][1].position.y)
+			{
+				target.draw(quad[2], states);
+				target.draw(quad[1], states);
+			}
+			else
+			{
+				target.draw(quad[1], states);
+				target.draw(quad[2], states);
+			}
 		}
 		else if (currpos.y > srodek_y && currpos.x > srodek_x)
 		{
-			target.draw(quad[2], states);
-			target.draw(quad[0], states);
+			if (currpos.y > quad[2][0].position.y)
+			{
+				target.draw(quad[2], states);
+				target.draw(quad[0], states);
+			}
+			else
+			{
+				target.draw(quad[0], states);
+				target.draw(quad[2], states);
+			}
 		}
 		else
 		{
-			target.draw(quad[3], states);
-			target.draw(quad[0], states);			
+			if (currpos.y <= quad[3][1].position.y)
+			{
+				target.draw(quad[0], states);
+				target.draw(quad[3], states);
+			}
+			else
+			{
+				target.draw(quad[3], states);
+				target.draw(quad[0], states);
+			}
 		}
 		
 		// dach
@@ -348,7 +320,7 @@ int main()
 	view.zoom(2.0f);
 	sf::Texture tekstura;
 
-	Prostokat3d klocek2(sf::FloatRect(150, 50, 500, 200), 100, wys_kamery, "static/budynek.png");
+	Prostokat3d klocek2(sf::FloatRect(100, 50, 500, 500), 100, wys_kamery, "static/budynek.png");
 
 	tekstura.loadFromFile("static/pl_sprite.png");
 	tekstura.setSmooth(true);
