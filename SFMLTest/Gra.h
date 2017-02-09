@@ -24,24 +24,35 @@ public:
 	bool quit = false;
 
 	Mapa(sf::RenderWindow* window, sf::Sprite* sprite)
-	{
+	{		
 		this->window = window;
 		wys_kamery = 300;
 		view = sf::View(sf::Vector2f(400, 300), sf::Vector2f(800, 600));
-		view.zoom(2.0f);
+		view.zoom(1.0f);
 		window->setView(view);
 		kolekcjaTekstur();
 		gracz = sprite;
-		czytajMapeZPliku("static/betamap.dat");
+		gracz->setScale(0.35, 0.35);
+		czytajMapeZPliku("static/betamap.dat");		
 		vs.sprite = gracz;
 		vs.view = &view;
+		poruszanieWodyth = new sf::Thread(&Mapa::poruszanieWoda, this);
+		poruszanieWodyth->launch();
 	}
 
 	~Mapa()
 	{
+		poruszanieWodyth->wait();
+		delete poruszanieWodyth;
+
 		for (int i = 0; i < obiekty2d.size(); i++)
 		{
 			delete obiekty2d[i];
+		}
+
+		for (int i = 0; i < woda.size(); i++)
+		{
+			delete woda[i];
 		}
 
 		delete kafel_t;
@@ -49,6 +60,8 @@ public:
 		delete blok_dach_t;
 		delete wiezowiec_t;
 		delete krzak_t;
+		delete ulica_prosto_t;
+		delete woda_t;
 	}
 
 	void kolekcjaTekstur()
@@ -67,6 +80,12 @@ public:
 
 		krzak_t = new sf::Texture();
 		krzak_t->loadFromFile("static/krzak.png");
+
+		ulica_prosto_t = new sf::Texture();
+		ulica_prosto_t->loadFromFile("static/ulica_prosto.png");
+
+		woda_t = new sf::Texture();
+		woda_t->loadFromFile("static/woda.png");
 	}
 
 	const sf::View getView() const
@@ -132,6 +151,32 @@ public:
 			{
 				ruchprzedost = false;
 				spr->setTextureRect(sf::IntRect(110, 0, 110, 130));
+			}
+		}
+	}
+
+	void poruszanieWoda()
+	{
+		sf::Clock clock;
+		int x = 0;
+
+		while (!quit)
+		{
+			if (clock.getElapsedTime().asMilliseconds() > 100.0f)
+			{
+				x += 50;
+
+				if (x >= 600)
+				{
+					x = 0;
+				}
+
+				for (int i = 0; i < woda.size(); i++)
+				{					
+					woda[i]->setTextureRect(sf::IntRect(x, 0, 50, 50));
+				}
+
+				clock.restart();
 			}
 		}
 	}
@@ -236,16 +281,25 @@ private:
 				switch (znak)
 				{
 				case 'k':
-					obiekty2d.push_back(kafel(i * 50, j * 50, kafel_t));
+					obiekty2d.push_back(kafel(j * 50, i * 50, kafel_t));
 					break;
-				case 'w':
-					obiekty3d.push_back(wiezowiec(i * 50, j * 50, wys_kamery, wiezowiec_t, wiezowiec_t));
+				case 'W':
+					obiekty3d.push_back(wiezowiec(j * 50, i * 50, wys_kamery, wiezowiec_t, wiezowiec_t));
 					break;
 				case 'b':
-					obiekty3d.push_back(blok(i * 50, j * 50, wys_kamery, blok_t, blok_dach_t));
+					obiekty3d.push_back(blok(j * 50, i * 50, wys_kamery, blok_t, blok_dach_t));
 					break;
 				case 'K':
-					obiekty3d.push_back(krzak(i * 50, j * 50, wys_kamery, krzak_t));
+					obiekty3d.push_back(krzak(j * 50, i * 50, wys_kamery, krzak_t));
+					break;
+				case '1':
+					obiekty2d.push_back(ulicaProsto(j * 50, i * 50, ulica_prosto_t));
+					break;
+				case 'w':
+					woda.push_back(wodiczka(j * 50, i * 50, woda_t));
+					break;
+				case '!':
+					//gracz->setPosition(sf::Vector2f(j * 50, i * 50));
 					break;
 				default:
 					break;
@@ -293,6 +347,11 @@ private:
 	{
 		states.transform *= getTransform();
 
+		for (auto i = woda.begin(); i != woda.end(); i++)
+		{
+			target.draw(**i);
+		}
+
 		for (auto i = obiekty2d.begin(); i != obiekty2d.end(); i++)
 		{
 			target.draw(**i);
@@ -310,6 +369,7 @@ private:
 
 	std::vector<Prostokat3d> obiekty3d;
 	std::vector<sf::Drawable*> obiekty2d;
+	std::vector<sf::RectangleShape*> woda;
 	sf::View view;
 	float wys_kamery;
 	sf::RenderWindow* window;
@@ -322,4 +382,9 @@ private:
 	sf::Texture* blok_dach_t;
 	sf::Texture* wiezowiec_t;
 	sf::Texture* krzak_t;
+	sf::Texture* ulica_prosto_t;
+	sf::Texture* woda_t;
+
+	// watki
+	sf::Thread* poruszanieWodyth;
 };

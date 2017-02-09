@@ -218,3 +218,24 @@ sf::RectangleShape* kafel(int x, int y, sf::Texture* texture)
 
 	return rect;
 }
+
+sf::RectangleShape* ulicaProsto(int x, int y, sf::Texture* texture)
+{
+	sf::RectangleShape* rect = new sf::RectangleShape();
+	rect->setSize(sf::Vector2f(200, 200));
+	rect->setPosition(sf::Vector2f(x, y));
+	rect->setTexture(texture);
+
+	return rect;
+}
+
+sf::RectangleShape* wodiczka(int x, int y, sf::Texture* texture)
+{
+	sf::RectangleShape* rect = new sf::RectangleShape();
+	rect->setTextureRect(sf::IntRect(0, 0, 50, 50));
+	rect->setSize(sf::Vector2f(50, 50));
+	rect->setPosition(sf::Vector2f(x, y));
+	rect->setTexture(texture);
+
+	return rect;
+}

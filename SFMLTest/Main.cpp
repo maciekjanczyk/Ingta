@@ -26,6 +26,8 @@ int main()
 	{
 		sf::Event event;
 
+		mapa.renderuj(); 
+
 		while (window.pollEvent(event))
 		{
 			float kat = 0;
