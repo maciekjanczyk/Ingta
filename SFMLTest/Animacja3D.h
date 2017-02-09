@@ -8,12 +8,12 @@ public:
 
 	float dist = 0;
 
-	Prostokat3d(const sf::FloatRect &rect, float wysokosc, float wys_kamery, const std::string &tekstura)
+	Prostokat3d(const sf::FloatRect &rect, float wysokosc, float wys_kamery, sf::Texture* texture, sf::Texture* textureDach)
 	{
 		this->wysokosc = wysokosc;
 		this->wys_kamery = wys_kamery;
-		this->tekstura.loadFromFile(tekstura);
-		this->tekstura.setRepeated(true);
+		this->tekstura = texture;
+		this->teksturadach = textureDach;
 		srodek_x = rect.left + rect.width / 2;
 		srodek_y = rect.top + rect.height / 2;
 
@@ -77,6 +77,7 @@ private:
 
 		sf::VertexArray quad[4];
 
+		sf::Vector2u tekSize = tekstura->getSize();
 		// sciana dol
 		quad[0] = sf::VertexArray(sf::Quads, 4);
 		quad[0][0].position = d3;
@@ -84,9 +85,9 @@ private:
 		quad[0][2].position = p4;
 		quad[0][3].position = p3;
 		quad[0][0].texCoords = sf::Vector2f(0, 0);
-		quad[0][1].texCoords = sf::Vector2f(250, 0);
-		quad[0][2].texCoords = sf::Vector2f(250, 100);
-		quad[0][3].texCoords = sf::Vector2f(0, 100);
+		quad[0][1].texCoords = sf::Vector2f(tekSize.x, 0);
+		quad[0][2].texCoords = sf::Vector2f(tekSize.x, tekSize.y);
+		quad[0][3].texCoords = sf::Vector2f(0, tekSize.y);
 
 		// sciana gora
 		quad[1] = sf::VertexArray(sf::Quads, 4);
@@ -95,9 +96,9 @@ private:
 		quad[1][2].position = p2;
 		quad[1][3].position = p1;
 		quad[1][0].texCoords = sf::Vector2f(0, 0);
-		quad[1][1].texCoords = sf::Vector2f(250, 0);
-		quad[1][2].texCoords = sf::Vector2f(250, 100);
-		quad[1][3].texCoords = sf::Vector2f(0, 100);
+		quad[1][1].texCoords = sf::Vector2f(tekSize.x, 0);
+		quad[1][2].texCoords = sf::Vector2f(tekSize.x, tekSize.y);
+		quad[1][3].texCoords = sf::Vector2f(0, tekSize.y);
 
 		// sciana lewo
 		quad[2] = sf::VertexArray(sf::Quads, 4);
@@ -106,9 +107,9 @@ private:
 		quad[2][2].position = p2;
 		quad[2][3].position = p4;
 		quad[2][0].texCoords = sf::Vector2f(0, 0);
-		quad[2][1].texCoords = sf::Vector2f(250, 0);
-		quad[2][2].texCoords = sf::Vector2f(250, 100);
-		quad[2][3].texCoords = sf::Vector2f(0, 100);
+		quad[2][1].texCoords = sf::Vector2f(tekSize.x, 0);
+		quad[2][2].texCoords = sf::Vector2f(tekSize.x, tekSize.y);
+		quad[2][3].texCoords = sf::Vector2f(0, tekSize.y);
 
 		// sciana prawo
 		quad[3] = sf::VertexArray(sf::Quads, 4);
@@ -117,11 +118,11 @@ private:
 		quad[3][2].position = p3;
 		quad[3][3].position = p1;
 		quad[3][0].texCoords = sf::Vector2f(0, 0);
-		quad[3][1].texCoords = sf::Vector2f(250, 0);
-		quad[3][2].texCoords = sf::Vector2f(250, 100);
-		quad[3][3].texCoords = sf::Vector2f(0, 100);
+		quad[3][1].texCoords = sf::Vector2f(tekSize.x, 0);
+		quad[3][2].texCoords = sf::Vector2f(tekSize.x, tekSize.y);
+		quad[3][3].texCoords = sf::Vector2f(0, tekSize.y);
 
-		states.texture = &(this->tekstura);
+		states.texture = this->tekstura;
 
 		if (currpos.y <= srodek_y && currpos.x <= srodek_x)
 		{
@@ -181,7 +182,7 @@ private:
 		sf::RectangleShape recsh;
 		recsh.setPosition(d1);
 		recsh.setSize(sf::Vector2f(fabsf(d4.x - d1.x), fabsf(d4.y - d1.y)));
-		recsh.setTexture(&tekstura);
+		recsh.setTexture(teksturadach);
 		target.draw(recsh, states);
 	}
 
@@ -189,5 +190,31 @@ private:
 	sf::Vector2f p1, p2, p3, p4;
 	sf::Vector2f d1, d2, d3, d4;
 	sf::Vector2f currpos;
-	sf::Texture tekstura;
+	sf::Texture* tekstura;
+	sf::Texture* teksturadach;
 };
+
+Prostokat3d wiezowiec(int x, int y, float wys_kamery, sf::Texture* boki, sf::Texture* dach)
+{
+	return Prostokat3d(sf::FloatRect(x, y, 400, 400), 100, wys_kamery, boki, dach);
+}
+
+Prostokat3d blok(int x, int y, float wys_kamery, sf::Texture* boki, sf::Texture* dach)
+{
+	return Prostokat3d(sf::FloatRect(x, y, 400, 400), 150, wys_kamery, boki, dach);
+}
+
+Prostokat3d krzak(int x, int y, float wys_kamery, sf::Texture* tekstura)
+{
+	return Prostokat3d(sf::FloatRect(x, y, 50, 50), 280, wys_kamery, tekstura, tekstura);
+}
+
+sf::RectangleShape* kafel(int x, int y, sf::Texture* texture)
+{
+	sf::RectangleShape* rect = new sf::RectangleShape();
+	rect->setSize(sf::Vector2f(50, 50));
+	rect->setPosition(sf::Vector2f(x, y));
+	rect->setTexture(texture);
+
+	return rect;
+}

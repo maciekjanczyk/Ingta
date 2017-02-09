@@ -30,13 +30,43 @@ public:
 		view = sf::View(sf::Vector2f(400, 300), sf::Vector2f(800, 600));
 		view.zoom(2.0f);
 		window->setView(view);
+		kolekcjaTekstur();
 		gracz = sprite;
-		obiekty3d.push_back(Prostokat3d(sf::FloatRect(400, 300, 300, 300), 100, wys_kamery, "static/budynek.png"));
-		obiekty3d.push_back(Prostokat3d(sf::FloatRect(800, 300, 300, 300), 100, wys_kamery, "static/budynek.png"));
-		obiekty3d.push_back(Prostokat3d(sf::FloatRect(400, 700, 300, 300), 100, wys_kamery, "static/budynek.png"));
-		obiekty3d.push_back(Prostokat3d(sf::FloatRect(800, 700, 300, 300), 100, wys_kamery, "static/budynek.png"));
+		czytajMapeZPliku("static/betamap.dat");
 		vs.sprite = gracz;
 		vs.view = &view;
+	}
+
+	~Mapa()
+	{
+		for (int i = 0; i < obiekty2d.size(); i++)
+		{
+			delete obiekty2d[i];
+		}
+
+		delete kafel_t;
+		delete blok_t;
+		delete blok_dach_t;
+		delete wiezowiec_t;
+		delete krzak_t;
+	}
+
+	void kolekcjaTekstur()
+	{
+		kafel_t = new sf::Texture();
+		kafel_t->loadFromFile("static/kafel.png");
+
+		blok_t = new sf::Texture();
+		blok_t->loadFromFile("static/blok.png");
+
+		blok_dach_t = new sf::Texture();
+		blok_dach_t->loadFromFile("static/blok_dach.png");
+
+		wiezowiec_t = new sf::Texture();
+		wiezowiec_t->loadFromFile("static/wiezowiec.png");
+
+		krzak_t = new sf::Texture();
+		krzak_t->loadFromFile("static/krzak.png");
 	}
 
 	const sf::View getView() const
@@ -189,6 +219,43 @@ public:
 
 private:
 
+	void czytajMapeZPliku(std::string mapname)
+	{
+		FILE* plik;
+		fopen_s(&plik, mapname.data(), "r");
+		int sizex, sizey;
+		char znak;
+		fscanf_s(plik, "%d", &sizex);
+		fscanf_s(plik, "%d", &sizey);
+
+		for (int i = 0; i < sizex; i++)
+		{
+			for (int j = 0; j < sizey; j++)
+			{
+				fscanf_s(plik, "%c", &znak);
+				switch (znak)
+				{
+				case 'k':
+					obiekty2d.push_back(kafel(i * 50, j * 50, kafel_t));
+					break;
+				case 'w':
+					obiekty3d.push_back(wiezowiec(i * 50, j * 50, wys_kamery, wiezowiec_t, wiezowiec_t));
+					break;
+				case 'b':
+					obiekty3d.push_back(blok(i * 50, j * 50, wys_kamery, blok_t, blok_dach_t));
+					break;
+				case 'K':
+					obiekty3d.push_back(krzak(i * 50, j * 50, wys_kamery, krzak_t));
+					break;
+				default:
+					break;
+				}
+			}
+		}
+
+		fclose(plik);
+	}
+
 	float liczRotacje(sf::Vector2f curPos, sf::Event::MouseMoveEvent m_position, sf::RenderWindow* gameWindow, sf::View* playerView)
 	{
 		sf::Vector2i position(m_position.x, m_position.y);
@@ -201,7 +268,7 @@ private:
 	}
 
 	void sortByDistance()
-	{		
+	{
 		sf::Vector2f currpos = gracz->getPosition();
 
 		for (int i = 0; i < obiekty3d.size(); i++)
@@ -216,18 +283,23 @@ private:
 					sqrtf((wektory[2].x - currpos.x) * (wektory[2].x - currpos.x) + (wektory[2].y - currpos.y) * (wektory[2].y - currpos.y)),
 					sqrtf((wektory[3].x - currpos.x) * (wektory[3].x - currpos.x) + (wektory[3].y - currpos.y) * (wektory[3].y - currpos.y))
 				)
-			);			
+			);
 		}
 
 		std::sort(obiekty3d.begin(), obiekty3d.end(), sortComparer);
-	}	
+	}
 
 	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
 	{
 		states.transform *= getTransform();
 
+		for (auto i = obiekty2d.begin(); i != obiekty2d.end(); i++)
+		{
+			target.draw(**i);
+		}
+
 		target.draw(*gracz);
-		
+
 		for (auto i = obiekty3d.begin(); i != obiekty3d.end(); i++)
 		{
 			target.draw(*i);
@@ -237,9 +309,17 @@ private:
 	}
 
 	std::vector<Prostokat3d> obiekty3d;
+	std::vector<sf::Drawable*> obiekty2d;
 	sf::View view;
 	float wys_kamery;
 	sf::RenderWindow* window;
 	sf::Sprite* gracz;
 	ViewSprite vs;
+
+	// galeria tekstur
+	sf::Texture* kafel_t;
+	sf::Texture* blok_t;
+	sf::Texture* blok_dach_t;
+	sf::Texture* wiezowiec_t;
+	sf::Texture* krzak_t;
 };
