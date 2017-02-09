@@ -6,6 +6,8 @@ class Prostokat3d : public sf::Drawable, public sf::Transformable
 {
 public:
 
+	float dist = 0;
+
 	Prostokat3d(const sf::FloatRect &rect, float wysokosc, float wys_kamery, const std::string &tekstura)
 	{
 		this->wysokosc = wysokosc;
@@ -40,6 +42,18 @@ public:
 		d2 = rzutowanie(sf::Vector3f(p2.x, p2.y, wysokosc), sf::Vector3f(pos.x, pos.y, wys_kamery));
 		d3 = rzutowanie(sf::Vector3f(p3.x, p3.y, wysokosc), sf::Vector3f(pos.x, pos.y, wys_kamery));
 		d4 = rzutowanie(sf::Vector3f(p4.x, p4.y, wysokosc), sf::Vector3f(pos.x, pos.y, wys_kamery));
+	}
+
+	std::vector<sf::Vector2f> wektoryPodstawy() const
+	{
+		std::vector<sf::Vector2f> ret(4);
+
+		ret[0] = d1;
+		ret[1] = d2;
+		ret[2] = d3;
+		ret[3] = d4;
+
+		return ret;
 	}
 
 private:

@@ -11,6 +11,11 @@ typedef struct
 	sf::Sprite* sprite;
 } ViewSprite;
 
+bool sortComparer(Prostokat3d p1, Prostokat3d p2)
+{
+	return (p1.dist > p2.dist);
+}
+
 class Mapa : public sf::Drawable, public sf::Transformable
 {
 public:
@@ -41,6 +46,8 @@ public:
 
 	void renderuj()
 	{
+		sortByDistance();
+
 		for (auto i = obiekty3d.begin(); i < obiekty3d.end(); i++)
 		{
 			i->renderuj(gracz->getPosition());
@@ -193,13 +200,35 @@ private:
 		return rotation - 180;
 	}
 
+	void sortByDistance()
+	{		
+		sf::Vector2f currpos = gracz->getPosition();
+
+		for (int i = 0; i < obiekty3d.size(); i++)
+		{
+			std::vector<sf::Vector2f> wektory = obiekty3d[i].wektoryPodstawy();
+			obiekty3d[i].dist = fminf(
+				fminf(
+					sqrtf((wektory[0].x - currpos.x) * (wektory[0].x - currpos.x) + (wektory[0].y - currpos.y) * (wektory[0].y - currpos.y)),
+					sqrtf((wektory[1].x - currpos.x) * (wektory[1].x - currpos.x) + (wektory[1].y - currpos.y) * (wektory[1].y - currpos.y))
+				),
+				fminf(
+					sqrtf((wektory[2].x - currpos.x) * (wektory[2].x - currpos.x) + (wektory[2].y - currpos.y) * (wektory[2].y - currpos.y)),
+					sqrtf((wektory[3].x - currpos.x) * (wektory[3].x - currpos.x) + (wektory[3].y - currpos.y) * (wektory[3].y - currpos.y))
+				)
+			);			
+		}
+
+		std::sort(obiekty3d.begin(), obiekty3d.end(), sortComparer);
+	}	
+
 	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
 	{
 		states.transform *= getTransform();
 
 		target.draw(*gracz);
-
-		for (auto i = obiekty3d.begin(); i < obiekty3d.end(); i++)
+		
+		for (auto i = obiekty3d.begin(); i != obiekty3d.end(); i++)
 		{
 			target.draw(*i);
 		}
