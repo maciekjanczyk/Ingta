@@ -22,6 +22,7 @@ public:
 
 	bool move = false;
 	bool quit = false;
+	bool pause = false;
 
 	// debug opts
 	bool waterAnimation = true;
@@ -210,7 +211,10 @@ public:
 
 	void obrocPostac(sf::Event ev)
 	{
-		gracz->setRotation(liczRotacje(gracz->getPosition(), ev.mouseMove, window, &view));
+		if (!pause)
+		{
+			gracz->setRotation(liczRotacje(gracz->getPosition(), ev.mouseMove, window, &view));
+		}
 	}
 
 	ViewSprite* getVSPointer()
@@ -226,15 +230,21 @@ public:
 		bool ruchprzedost = false;
 
 		while (!quit)
-		{
+		{			
 			if (move)
 			{
 				ruchprzedost = true;
 				if (clock.getElapsedTime().asMilliseconds() > 100.0f)
 				{
-					x = x == 660 ? 220 : x + 110;
-					spr->setTextureRect(sf::IntRect(x, 0, 110, 130));
 					clock.restart();
+
+					if (pause)
+					{
+						continue;
+					}
+
+					x = x == 660 ? 220 : x + 110;
+					spr->setTextureRect(sf::IntRect(x, 0, 110, 130));					
 				}
 			}
 			else if (ruchprzedost)
@@ -249,6 +259,11 @@ public:
 	{
 		while (!quit)
 		{
+			if (pause)
+			{
+				continue;
+			}
+
 			renderuj();
 		}
 	}
@@ -262,6 +277,13 @@ public:
 		{
 			if (clock.getElapsedTime().asMilliseconds() > 100.0f)
 			{
+				clock.restart();
+
+				if (pause)
+				{
+					continue;
+				}
+
 				x += 50;
 
 				if (x >= 600)
@@ -272,9 +294,7 @@ public:
 				for (int i = 0; i < woda.size(); i++)
 				{					
 					woda[i]->setTextureRect(sf::IntRect(x, 0, 50, 50));
-				}
-
-				clock.restart();
+				}				
 			}
 		}
 	}
@@ -288,6 +308,11 @@ public:
 
 		while (!quit)
 		{
+			if (pause)
+			{
+				continue;
+			}
+
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift))
 			{
 				predkosc = 0.0008;
