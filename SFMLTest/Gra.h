@@ -22,7 +22,11 @@ public:
 
 	bool move = false;
 	bool quit = false;
+
+	// debug opts
 	bool waterAnimation = true;
+	bool showMapMatrix = false;
+	bool rendering3d = true;
 
 	Mapa(sf::RenderWindow* window, sf::Sprite* sprite, std::string map_fname)
 	{		
@@ -44,8 +48,11 @@ public:
 			poruszanieWodyth->launch();
 		}
 
-		renderTh = new sf::Thread(&Mapa::renderProc, this);
-		renderTh->launch();
+		if (rendering3d)
+		{
+			renderTh = new sf::Thread(&Mapa::renderProc, this);
+			renderTh->launch();
+		}
 
 		poruszanieSpriteTh = new sf::Thread(&Mapa::poruszanieSprite, this);
 		poruszanieSpriteTh->launch();
@@ -56,8 +63,11 @@ public:
 
 	~Mapa()
 	{
-		renderTh->wait();
-		delete renderTh;
+		if (rendering3d)
+		{
+			renderTh->wait();
+			delete renderTh;
+		}
 
 		poruszanieKeyboardTh->wait();
 		delete poruszanieKeyboardTh;
@@ -88,6 +98,41 @@ public:
 		delete krzak_t;
 		delete ulica_prosto_t;
 		delete woda_t;
+
+		for (int i = 0; i < mtrxM; i++)
+		{
+			delete[] mapmtrx[i];
+		}
+
+		delete[] mapmtrx;
+	}
+
+	bool czyGraczNieWchodziNaObiekt(sf::Vector2f vec)
+	{
+		sf::Vector2f currpos = gracz->getPosition();
+
+		int mapposx = (int)((currpos.x + vec.x) / 50.0);
+		int mapposy = (int)((currpos.y + vec.y) / 50.0);
+
+		return mapmtrx[mapposy][mapposx] != 'x';
+	}
+
+	void initMapMatrix(int m, int n)
+	{
+		mapmtrx = new char*[m];
+
+		for (int i = 0; i < m; i++)
+		{
+			mapmtrx[i] = new char[n];
+
+			for (int j = 0; j < n; j++)
+			{
+				mapmtrx[i][j] = '-';
+			}
+		}
+
+		mtrxM = m;
+		mtrxN = n;
 	}
 
 	void kolekcjaTekstur()
@@ -233,7 +278,7 @@ public:
 			}
 		}
 	}
-
+	
 	void poruszanieKeyboard()
 	{
 		ViewSprite* vs = &(this->vs);
@@ -243,60 +288,77 @@ public:
 
 		while (!quit)
 		{
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift))
+			{
+				predkosc = 0.0008;
+			}
+			else
+			{
+				predkosc = 0.0005;
+			}
+
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
 			{
-				move = true;
-				double angle = (view->getRotation() - 45) * M_PI / 2;
-				double move_x = predkosc * cos(angle);
-				double move_y = predkosc * sin(angle);
-				sf::Vector2f vec = sf::Vector2f(move_x, move_y);
-				spr->move(
+				sf::Vector2f ruch(
 					sin(M_PI * view->getRotation() / 180.f) * predkosc,
 					-1 * cos(M_PI * view->getRotation() / 180.f) * predkosc
 				);
-				view->move(
-					sin(M_PI * view->getRotation() / 180.f) * predkosc,
-					-1 * cos(M_PI * view->getRotation() / 180.f) * predkosc
-				);
+
+				if (czyGraczNieWchodziNaObiekt(ruch))
+				{
+					move = true;
+					double angle = (view->getRotation() - 45) * M_PI / 2;
+					double move_x = predkosc * cos(angle);
+					double move_y = predkosc * sin(angle);
+					sf::Vector2f vec = sf::Vector2f(move_x, move_y);
+					spr->move(ruch);
+					view->move(ruch);
+				}
 			}
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 			{
-				move = true;
-				sf::Vector2f vec = sf::Vector2f(0, predkosc);;
-				spr->move(
+				sf::Vector2f ruch(
 					sin(M_PI * (view->getRotation() - 180) / 180.f) * predkosc,
 					-1 * cos(M_PI * (view->getRotation() - 180) / 180.f) * predkosc
 				);
-				view->move(
-					sin(M_PI * (view->getRotation() - 180) / 180.f) * predkosc,
-					-1 * cos(M_PI * (view->getRotation() - 180) / 180.f) * predkosc
-				);
+
+				if (czyGraczNieWchodziNaObiekt(ruch))
+				{
+					move = true;
+					sf::Vector2f vec = sf::Vector2f(0, predkosc);;
+					spr->move(ruch);
+					view->move(ruch);
+				}
 			}
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
 			{
-				move = true;
-				sf::Vector2f vec = sf::Vector2f(-predkosc, 0);
-				spr->move(
+				sf::Vector2f ruch(
 					sin(M_PI * (view->getRotation() - 90) / 180.f) * predkosc,
 					-1 * cos(M_PI * (view->getRotation() - 90) / 180.f) * predkosc
 				);
-				view->move(
-					sin(M_PI * (view->getRotation() - 90) / 180.f) * predkosc,
-					-1 * cos(M_PI * (view->getRotation() - 90) / 180.f) * predkosc
-				);
+
+				if (czyGraczNieWchodziNaObiekt(ruch))
+				{
+					move = true;
+					sf::Vector2f vec = sf::Vector2f(-predkosc, 0);
+					spr->move(ruch);
+					view->move(ruch);
+				}
 			}
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
 			{
-				move = true;
-				sf::Vector2f vec = sf::Vector2f(predkosc, 0);
-				spr->move(
+				sf::Vector2f ruch(
 					sin(M_PI * (view->getRotation() + 90) / 180.f) * predkosc,
 					-1 * cos(M_PI * (view->getRotation() + 90) / 180.f) * predkosc
 				);
-				view->move(
-					sin(M_PI * (view->getRotation() + 90) / 180.f) * predkosc,
-					-1 * cos(M_PI * (view->getRotation() + 90) / 180.f) * predkosc
-				);
+
+				if (czyGraczNieWchodziNaObiekt(ruch))
+				{
+					move = true;
+					sf::Vector2f vec = sf::Vector2f(predkosc, 0);
+					spr->move(ruch);
+					view->move(ruch);
+				}
 			}
 
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
@@ -311,7 +373,7 @@ public:
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
 			{
 				view->rotate(-predkosc);
-			}
+			}			
 		}
 	}
 
@@ -326,6 +388,8 @@ private:
 		fscanf_s(plik, "%d", &sizex);
 		fscanf_s(plik, "%d", &sizey);
 
+		initMapMatrix(sizex, sizey);
+
 		for (int i = 0; i < sizex; i++)
 		{
 			for (int j = 0; j < sizey; j++)
@@ -333,31 +397,71 @@ private:
 				fscanf_s(plik, "%c", &znak);
 				switch (znak)
 				{
+				case '\n':				
+					break;
 				case 'k':
 					obiekty2d.push_back(kafel(j * 50, i * 50, kafel_t));
+					mapmtrx[i][j] = 'k';
 					break;
 				case 'W':
 					obiekty3d.push_back(wiezowiec(j * 50, i * 50, wys_kamery, wiezowiec_t, wiezowiec_t));
+					for (int ii = 0; ii < 8; ii++)
+					{
+						for (int jj = 0; jj < 8; jj++)
+						{
+							mapmtrx[i + ii][j + jj] = 'x';
+						}
+					}
 					break;
 				case 'b':
 					obiekty3d.push_back(blok(j * 50, i * 50, wys_kamery, blok_t, blok_dach_t));
+					for (int ii = 0; ii < 8; ii++)
+					{
+						for (int jj = 0; jj < 8; jj++)
+						{
+							mapmtrx[i + ii][j + jj] = 'x';
+						}
+					}
 					break;
 				case 'K':
 					obiekty3d.push_back(krzak(j * 50, i * 50, wys_kamery, krzak_t));
+					mapmtrx[i][j] = 'x';
 					break;
 				case '1':
 					obiekty2d.push_back(ulicaProsto(j * 50, i * 50, ulica_prosto_t));
+					for (int ii = 0; ii < 4; ii++)
+					{
+						for (int jj = 1; jj < 3; jj++)
+						{
+							mapmtrx[i + ii][j + jj] = '1';
+						}
+					}
 					break;
 				case 'w':
 					woda.push_back(wodiczka(j * 50, i * 50, woda_t));
+					mapmtrx[i][j] = 'w';
 					break;
 				case '!':
 					gracz->setPosition(sf::Vector2f(j * 50, i * 50));
 					view.setCenter(sf::Vector2f(j * 50, i * 50));
+					mapmtrx[i][j] = '!';
 					break;
 				default:
 					break;
 				}
+			}
+		}
+
+		if (showMapMatrix)
+		{
+			for (int i = 0; i < mtrxM; i++)
+			{
+				for (int j = 0; j < mtrxN; j++)
+				{
+					std::cout << mapmtrx[i][j];
+				}
+
+				std::cout << std::endl;
 			}
 		}
 
@@ -429,6 +533,8 @@ private:
 	sf::RenderWindow* window;
 	sf::Sprite* gracz;
 	ViewSprite vs;
+	char** mapmtrx;
+	int mtrxM, mtrxN;
 
 	// galeria tekstur
 	sf::Texture* kafel_t;
