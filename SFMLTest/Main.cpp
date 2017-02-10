@@ -48,7 +48,7 @@ int main()
 			case sf::Event::KeyPressed:
 				if (event.key.code == sf::Keyboard::Escape)
 				{
-					mapa.pause = !mapa.pause;
+					mapa.Pause();
 				}
 				break;
 

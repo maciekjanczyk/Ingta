@@ -108,6 +108,11 @@ public:
 		delete[] mapmtrx;
 	}
 
+	void Pause()
+	{
+		pause = !pause;
+	}
+
 	bool czyGraczNieWchodziNaObiekt(sf::Vector2f vec)
 	{
 		sf::Vector2f currpos = gracz->getPosition();
@@ -190,6 +195,18 @@ public:
 			if (odleglosc <= (sqrtf(powf(rozmv.x, 2) + powf(rozmv.y, 2)) + 10))
 			{
 				i->renderuj(gracz->getPosition());
+			}
+		}
+
+		if (strzalAnim)
+		{
+			strzal.move(strzalPrzyspieszenie);
+
+			sf::Vector2f strzalpos = strzal.getPosition();
+
+			if ((fabsf(strzalpos.x - strzalCel.x) < 5) && (fabsf(strzalpos.y - strzalCel.y) < 5))
+			{
+				strzalAnim = false;
 			}
 		}
 	}
@@ -389,6 +406,31 @@ public:
 			if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
 			{
 				spr->setTextureRect(sf::IntRect(770, 0, 110, 130));
+
+				if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+				{
+					if (!strzalAnim)
+					{
+						sf::Vector2f curPos = gracz->getPosition();
+						//strzal = sf::RectangleShape(sf::Vector2f(2.0, 2.0));
+						strzal = sf::CircleShape(2.0);
+						strzal.setFillColor(sf::Color::Red);
+						strzal.setOutlineColor(sf::Color::Red);
+						strzal.setPosition(curPos);
+						sf::Vector2i mpos = sf::Mouse::getPosition(*window);
+						sf::Vector2i position(mpos.x, mpos.y);
+						strzalCel = sf::Vector2f(window->mapPixelToCoords(position, *view));
+						float dx = curPos.x - strzalCel.x;
+						float dy = curPos.y - strzalCel.y;
+						float rotation = (atan2(dy, dx)) * 180 / M_PI;
+						strzal.rotate(rotation);
+						strzalPrzyspieszenie = sf::Vector2f(
+							sin(M_PI * (strzal.getRotation() - 90) / 180.f) * predkoscStrzalu,
+							-1 * cos(M_PI * (strzal.getRotation() - 90) / 180.f) * predkoscStrzalu
+						);
+						strzalAnim = true;
+					}
+				}
 			}
 
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
@@ -547,6 +589,11 @@ private:
 			target.draw(*i);
 		}
 
+		if (strzalAnim)
+		{
+			target.draw(strzal);
+		}
+
 		window->setView(view);
 	}
 
@@ -560,6 +607,12 @@ private:
 	ViewSprite vs;
 	char** mapmtrx;
 	int mtrxM, mtrxN;
+
+	bool strzalAnim = false;
+	sf::CircleShape strzal;
+	sf::Vector2f strzalPrzyspieszenie;
+	sf::Vector2f strzalCel;
+	float predkoscStrzalu = 4.0;
 
 	// galeria tekstur
 	sf::Texture* kafel_t;
