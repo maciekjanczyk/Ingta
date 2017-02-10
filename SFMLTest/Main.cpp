@@ -2,9 +2,14 @@
 #include <SFML/Graphics.hpp>
 #include "Gra.h"
 
+/*extern "C" {
+	_declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
+}*/
+
 int main()
 {
 	sf::RenderWindow window(sf::VideoMode(800, 600), "Ingta 0.01a");	
+	window.setFramerateLimit(50);
 	
 	sf::Texture tekstura;
 	tekstura.loadFromFile("static/pl_sprite.png");
@@ -15,18 +20,11 @@ int main()
 	sprite.setPosition(sf::Vector2f(400, 300));
 	sprite.setOrigin(sf::Vector2f(textRect.width / 2, textRect.height / 2));
 	sprite.setRotation(0);
-	Mapa mapa(&window, &sprite);
-
-	sf::Thread th(&Mapa::poruszanieSprite, &mapa);
-	sf::Thread th2(&Mapa::poruszanieKeyboard, &mapa);
-	th.launch();
-	th2.launch();
+	Mapa mapa(&window, &sprite, "static/betamap.dat");
 
 	while (window.isOpen())
 	{
 		sf::Event event;
-
-		mapa.renderuj(); 
 
 		while (window.pollEvent(event))
 		{
@@ -50,20 +48,12 @@ int main()
 			default:
 				break;
 			}
-		}
-
-		if (mapa.move)
-		{
-			mapa.renderuj();
-		}
+		}		
 		
 		window.clear();
 		window.draw(mapa);
 		window.display();
 	}
-
-	th.wait();
-	th2.wait();
 
 	return EXIT_SUCCESS;
 }

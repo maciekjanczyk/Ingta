@@ -22,8 +22,9 @@ public:
 
 	bool move = false;
 	bool quit = false;
+	bool waterAnimation = true;
 
-	Mapa(sf::RenderWindow* window, sf::Sprite* sprite)
+	Mapa(sf::RenderWindow* window, sf::Sprite* sprite, std::string map_fname)
 	{		
 		this->window = window;
 		wys_kamery = 300;
@@ -33,17 +34,42 @@ public:
 		kolekcjaTekstur();
 		gracz = sprite;
 		gracz->setScale(0.35, 0.35);
-		czytajMapeZPliku("static/betamap.dat");		
+		czytajMapeZPliku(map_fname);		
 		vs.sprite = gracz;
-		vs.view = &view;
-		poruszanieWodyth = new sf::Thread(&Mapa::poruszanieWoda, this);
-		poruszanieWodyth->launch();
+		vs.view = &view;		
+		
+		if (waterAnimation)
+		{
+			poruszanieWodyth = new sf::Thread(&Mapa::poruszanieWoda, this);
+			poruszanieWodyth->launch();
+		}
+
+		renderTh = new sf::Thread(&Mapa::renderProc, this);
+		renderTh->launch();
+
+		poruszanieSpriteTh = new sf::Thread(&Mapa::poruszanieSprite, this);
+		poruszanieSpriteTh->launch();
+
+		poruszanieKeyboardTh = new sf::Thread(&Mapa::poruszanieKeyboard, this);
+		poruszanieKeyboardTh->launch();
 	}
 
 	~Mapa()
 	{
-		poruszanieWodyth->wait();
-		delete poruszanieWodyth;
+		renderTh->wait();
+		delete renderTh;
+
+		poruszanieKeyboardTh->wait();
+		delete poruszanieKeyboardTh;
+
+		poruszanieSpriteTh->wait();
+		delete poruszanieSpriteTh;
+
+		if (waterAnimation)
+		{
+			poruszanieWodyth->wait();
+			delete poruszanieWodyth;
+		}		
 
 		for (int i = 0; i < obiekty2d.size(); i++)
 		{
@@ -99,7 +125,26 @@ public:
 
 		for (auto i = obiekty3d.begin(); i < obiekty3d.end(); i++)
 		{
-			i->renderuj(gracz->getPosition());
+			sf::Vector2f currpos = gracz->getPosition();
+			std::vector<sf::Vector2f> wektory = i->wektoryPodstawy();
+			
+			float odleglosc = fminf(
+				fminf(
+					sqrtf((wektory[0].x - currpos.x) * (wektory[0].x - currpos.x) + (wektory[0].y - currpos.y) * (wektory[0].y - currpos.y)),
+					sqrtf((wektory[1].x - currpos.x) * (wektory[1].x - currpos.x) + (wektory[1].y - currpos.y) * (wektory[1].y - currpos.y))
+				),
+				fminf(
+					sqrtf((wektory[2].x - currpos.x) * (wektory[2].x - currpos.x) + (wektory[2].y - currpos.y) * (wektory[2].y - currpos.y)),
+					sqrtf((wektory[3].x - currpos.x) * (wektory[3].x - currpos.x) + (wektory[3].y - currpos.y) * (wektory[3].y - currpos.y))
+				)
+			);
+			
+			sf::Vector2f rozmv = view.getSize();
+
+			if (odleglosc <= (sqrtf(powf(rozmv.x, 2) + powf(rozmv.y, 2)) + 10))
+			{
+				i->renderuj(gracz->getPosition());
+			}
 		}
 	}
 
@@ -152,6 +197,14 @@ public:
 				ruchprzedost = false;
 				spr->setTextureRect(sf::IntRect(110, 0, 110, 130));
 			}
+		}
+	}
+
+	void renderProc()
+	{
+		while (!quit)
+		{
+			renderuj();
 		}
 	}
 
@@ -299,7 +352,8 @@ private:
 					woda.push_back(wodiczka(j * 50, i * 50, woda_t));
 					break;
 				case '!':
-					//gracz->setPosition(sf::Vector2f(j * 50, i * 50));
+					gracz->setPosition(sf::Vector2f(j * 50, i * 50));
+					view.setCenter(sf::Vector2f(j * 50, i * 50));
 					break;
 				default:
 					break;
@@ -387,4 +441,7 @@ private:
 
 	// watki
 	sf::Thread* poruszanieWodyth;
+	sf::Thread* renderTh;
+	sf::Thread* poruszanieSpriteTh;
+	sf::Thread* poruszanieKeyboardTh;
 };
